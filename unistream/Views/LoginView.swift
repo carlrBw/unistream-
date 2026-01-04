@@ -29,10 +29,11 @@ struct LoginView: View {
                             .foregroundColor(.white)
                             .padding(.top, 50)
                         
-                        Text("StreamSphere")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                        Text("Unistream")
+                            .font(.title2)
+                            .fontWeight(.medium)
                             .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
                         
                         // Social Sign in buttons
                         VStack(spacing: 15) {

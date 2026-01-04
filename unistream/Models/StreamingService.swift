@@ -9,6 +9,7 @@ enum StreamingService: String, CaseIterable {
     case prime = "Prime Video"
     case hboMax = "Max"
     case peacock = "Peacock"
+    case inTheaters = "In Theaters"
     
     var color: Color {
         switch self {
@@ -28,6 +29,8 @@ enum StreamingService: String, CaseIterable {
             return .purple
         case .peacock:
             return .yellow
+        case .inTheaters:
+            return .orange
         }
     }
     
@@ -49,6 +52,8 @@ enum StreamingService: String, CaseIterable {
             return "https://www.max.com/favicon.ico"
         case .peacock:
             return "https://www.peacocktv.com/static/favicon.ico"
+        case .inTheaters:
+            return "" // Will use system icon
         }
     }
 } 

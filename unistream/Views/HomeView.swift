@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @StateObject private var mockData = MockData.shared
@@ -92,6 +93,11 @@ struct HomeView: View {
                                 ContentRow(title: "In Theaters Now", content: mockData.nowPlaying)
                             }
                             
+                            // In Theaters
+                            if !mockData.nowPlaying.isEmpty {
+                                ContentRow(title: "In Theaters", content: mockData.nowPlaying)
+                            }
+                            
                             // Mixed content
                             if !mockData.content.isEmpty {
                                 ContentRow(title: "Continue Watching", content: Array(mockData.content.shuffled().prefix(5)))
@@ -108,13 +114,31 @@ struct HomeView: View {
                              endPoint: .bottom)
                 .ignoresSafeArea()
             )
-            .navigationTitle("StreamSphere")
-            .navigationBarItems(
-                trailing: NavigationLink(destination: SearchView()) {
-                    Image(systemName: "magnifyingglass")
-                        .imageScale(.large)
+            .navigationTitle("Unistream")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: SearchView()) {
+                        Image(systemName: "magnifyingglass")
+                            .imageScale(.large)
+                    }
                 }
-            )
+            }
+            .onAppear {
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = .clear
+                appearance.titleTextAttributes = [
+                    .foregroundColor: UIColor.white,
+                    .font: UIFont.systemFont(ofSize: 18, weight: .medium)
+                ]
+                appearance.largeTitleTextAttributes = [
+                    .foregroundColor: UIColor.white,
+                    .font: UIFont.systemFont(ofSize: 18, weight: .medium)
+                ]
+                UINavigationBar.appearance().standardAppearance = appearance
+                UINavigationBar.appearance().scrollEdgeAppearance = appearance
+            }
             .task {
                 if mockData.content.isEmpty {
                     await mockData.loadContent()
@@ -150,19 +174,32 @@ struct ServiceIcon: View {
     
     var body: some View {
         VStack(spacing: 4) {
-            AsyncImage(url: URL(string: service.logoURL)) { image in
-                image
+            if service == .inTheaters {
+                // Use system icon for "In Theaters"
+                Image(systemName: "film.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 40, height: 40)
-            } placeholder: {
+                    .foregroundColor(service.color)
+            } else if !service.logoURL.isEmpty {
+                AsyncImage(url: URL(string: service.logoURL)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 40, height: 40)
+                } placeholder: {
+                    Circle()
+                        .fill(service.color)
+                        .frame(width: 40, height: 40)
+                        .overlay(
+                            ProgressView()
+                                .tint(.white)
+                        )
+                }
+            } else {
                 Circle()
                     .fill(service.color)
                     .frame(width: 40, height: 40)
-                    .overlay(
-                        ProgressView()
-                            .tint(.white)
-                    )
             }
             Text(service.rawValue)
                 .font(.caption2)

@@ -4,18 +4,22 @@ struct ContentDetailView: View {
     @StateObject private var mockData = MockData.shared
     let content: Content
     @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     @State private var isLiked = false
     @State private var likesCount: Int
+    @State private var viewsCount: Int
     @State private var newComment = ""
     @State private var comments: [Comment]
     @State private var selectedEpisode: Episode?
     @State private var isAddedToProfile: Bool
     @State private var isLooped = false
+    @State private var isWatched = false
     @State private var selectedSeason: Int = 1
     
     init(content: Content) {
         self.content = content
         _likesCount = State(initialValue: content.likes)
+        _viewsCount = State(initialValue: content.viewCount)
         _comments = State(initialValue: content.comments)
         _isAddedToProfile = State(initialValue: false)
         if let firstEpisode = content.episodes?.first {
@@ -34,7 +38,7 @@ struct ContentDetailView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, height: 300)
+                                .frame(width: geometry.size.width, height: 400)
                                 .clipped()
                         } placeholder: {
                             Rectangle()
@@ -61,7 +65,7 @@ struct ContentDetailView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             // Add spacer to push content down
                             Spacer()
-                                .frame(height: 160) // Adjust this value to control how far down the content starts
+                                .frame(height: 270) // Increased to show more of the banner image
                             
                             // Title and Action Buttons
                             HStack {
@@ -133,7 +137,7 @@ struct ContentDetailView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: "eye.fill")
                                             .foregroundColor(.gray)
-                                        Text("\(content.viewCount) viewers")
+                                        Text("\(viewsCount) user\(viewsCount == 1 ? " has" : "s have") watched")
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                     }
@@ -142,13 +146,22 @@ struct ContentDetailView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: isLiked ? "heart.fill" : "heart")
                                             .foregroundColor(isLiked ? .red : .gray)
-                                        Text("\(likesCount) likes")
+                                        Text("\(likesCount) user\(likesCount == 1 ? " has" : "s have") liked")
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                     }
                                 }
                                 
                                 Spacer()
+                                
+                                // Watched button (only for movies)
+                                if !content.isTVShow {
+                                    Button(action: toggleWatched) {
+                                        Image(systemName: isWatched ? "checkmark.circle.fill" : "checkmark.circle")
+                                            .foregroundColor(isWatched ? .green : .gray)
+                                            .imageScale(.large)
+                                    }
+                                }
                                 
                                 // Play button
                                 Button(action: {
@@ -164,56 +177,60 @@ struct ContentDetailView: View {
                         .padding(.bottom, 20)
                     }
                 }
-                .frame(height: 300)
+                .frame(height: 400)
                 
                 // Description and remaining content
                 VStack(alignment: .leading, spacing: 20) {
                     if content.isTVShow {
-                        // Seasons and Episodes Section
-                        VStack(alignment: .leading, spacing: 15) {
-                            if let episodes = content.episodes {
-                                // Get unique seasons sorted
-                                let seasons = Array(Set(episodes.map { $0.season })).sorted()
-                                
-                                VStack(alignment: .leading, spacing: 8) {
-                                    // Season Picker
-                                    Menu {
-                                        ForEach(seasons, id: \.self) { season in
-                                            Button(action: {
-                                                withAnimation {
-                                                    selectedSeason = season
-                                                }
-                                            }) {
-                                                HStack {
-                                                    Text("Season \(season)")
-                                                    if season == selectedSeason {
-                                                        Image(systemName: "checkmark")
-                                                    }
+                        // Season Counter - Moved below content info with spacing
+                        if let episodes = content.episodes {
+                            let seasons = Array(Set(episodes.map { $0.season })).sorted()
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Season Picker
+                                Menu {
+                                    ForEach(seasons, id: \.self) { season in
+                                        Button(action: {
+                                            withAnimation {
+                                                selectedSeason = season
+                                            }
+                                        }) {
+                                            HStack {
+                                                Text("Season \(season)")
+                                                if season == selectedSeason {
+                                                    Image(systemName: "checkmark")
                                                 }
                                             }
                                         }
-                                    } label: {
-                                        HStack {
-                                            Text("Season \(selectedSeason)")
-                                                .fontWeight(.semibold)
-                                            Image(systemName: "chevron.down")
-                                                .imageScale(.small)
-                                        }
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(Color.white.opacity(0.1))
-                                        .cornerRadius(8)
                                     }
-                                    
-                                    // Episode count for selected season
-                                    let seasonEpisodes = episodes.filter { $0.season == selectedSeason }
-                                    Text("\(seasonEpisodes.count) Episodes")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                } label: {
+                                    HStack {
+                                        Text("Season \(selectedSeason)")
+                                            .fontWeight(.semibold)
+                                        Image(systemName: "chevron.down")
+                                            .imageScale(.small)
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Color.white.opacity(0.1))
+                                    .cornerRadius(8)
                                 }
-                                .padding(.horizontal)
                                 
+                                // Episode count for selected season
+                                let seasonEpisodes = episodes.filter { $0.season == selectedSeason }
+                                Text("\(seasonEpisodes.count) Episodes")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 40)
+                            .padding(.bottom, 10)
+                        }
+                        
+                        // Episodes Section
+                        VStack(alignment: .leading, spacing: 15) {
+                            if let episodes = content.episodes {
                                 // Episodes List
                                 ForEach(episodes.filter { $0.season == selectedSeason }) { episode in
                                     EpisodeCard(
@@ -229,7 +246,6 @@ struct ContentDetailView: View {
                                 }
                             }
                         }
-                        .padding(.top, 20)
                     } else {
                         // Movie Social Section
                         MovieSocialSection(
@@ -250,6 +266,27 @@ struct ContentDetailView: View {
         .onAppear {
             isAddedToProfile = userState.isInMyList(content)
             isLooped = userState.loopedSeries.contains(where: { $0.id == content.id })
+            
+            // Load real data from interaction service
+            if let userId = userState.currentUser?.id {
+                isLiked = interactionService.hasUserLikedContent(content.id, userId: userId)
+                likesCount = interactionService.getContentLikesCount(content.id)
+                
+                if !content.isTVShow {
+                    isWatched = interactionService.hasUserWatchedContent(content.id, userId: userId)
+                    viewsCount = interactionService.getContentViewsCount(content.id)
+                } else {
+                    viewsCount = content.viewCount // Keep original view count for TV shows
+                }
+            } else {
+                // For non-authenticated users, show counts but not personal status
+                likesCount = interactionService.getContentLikesCount(content.id)
+                if !content.isTVShow {
+                    viewsCount = interactionService.getContentViewsCount(content.id)
+                } else {
+                    viewsCount = content.viewCount
+                }
+            }
         }
         .task {
             if mockData.content.isEmpty {
@@ -276,6 +313,23 @@ struct ContentDetailView: View {
                 userState.addToLoopedEpisodes(content: content, episode: selectedEpisode!)
             }
             // You might want to add a remove function as well
+        }
+    }
+    
+    private func toggleWatched() {
+        guard let userId = userState.currentUser?.id else { return }
+        
+        withAnimation {
+            isWatched.toggle()
+            if isWatched {
+                userState.markMovieAsWatched(content)
+                interactionService.markContentAsWatched(content.id, userId: userId)
+                viewsCount = interactionService.getContentViewsCount(content.id)
+            } else {
+                userState.markMovieAsUnwatched(content)
+                interactionService.unmarkContentAsWatched(content.id, userId: userId)
+                viewsCount = interactionService.getContentViewsCount(content.id)
+            }
         }
     }
     
@@ -306,11 +360,14 @@ struct EpisodeCard: View {
     let action: () -> Void
     @State private var isLiked = false
     @State private var likesCount: Int
+    @State private var viewsCount: Int = 0
     @State private var showComments = false
     @State private var newComment = ""
     @State private var comments: [Comment]
     @State private var isLooped = false
+    @State private var isWatched = false
     @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     
     init(episode: Episode, isSelected: Bool, action: @escaping () -> Void) {
         self.episode = episode
@@ -318,6 +375,24 @@ struct EpisodeCard: View {
         self.action = action
         _likesCount = State(initialValue: episode.likes)
         _comments = State(initialValue: episode.comments)
+    }
+    
+    private func checkWatchedStatus() {
+        if let userId = userState.currentUser?.id {
+            isWatched = interactionService.hasUserWatchedEpisode(episode.id, userId: userId)
+            viewsCount = interactionService.getEpisodeViewsCount(episode.id)
+        } else {
+            isWatched = false
+            viewsCount = 0
+        }
+        
+        // Also check likes
+        if let userId = userState.currentUser?.id {
+            isLiked = interactionService.hasUserLikedEpisode(episode.id, userId: userId)
+            likesCount = interactionService.getEpisodeLikesCount(episode.id)
+        } else {
+            likesCount = interactionService.getEpisodeLikesCount(episode.id)
+        }
     }
     
     var body: some View {
@@ -379,6 +454,13 @@ struct EpisodeCard: View {
                 
                 Spacer()
                 
+                // Watched button
+                Button(action: toggleWatched) {
+                    Image(systemName: isWatched ? "checkmark.circle.fill" : "checkmark.circle")
+                        .foregroundColor(isWatched ? .green : .gray)
+                        .imageScale(.large)
+                }
+                
                 // Play button
                 Button(action: {
                     // Add play action here
@@ -389,6 +471,9 @@ struct EpisodeCard: View {
                 }
             }
             .padding(.top, 4)
+            .onAppear {
+                checkWatchedStatus()
+            }
             
             if showComments {
                 VStack(alignment: .leading, spacing: 12) {
@@ -424,9 +509,16 @@ struct EpisodeCard: View {
     }
     
     private func toggleLike() {
+        guard let userId = userState.currentUser?.id else { return }
+        
         withAnimation {
             isLiked.toggle()
-            likesCount += isLiked ? 1 : -1
+            if isLiked {
+                interactionService.likeEpisode(episode.id, userId: userId)
+            } else {
+                interactionService.unlikeEpisode(episode.id, userId: userId)
+            }
+            likesCount = interactionService.getEpisodeLikesCount(episode.id)
         }
     }
     
@@ -437,6 +529,23 @@ struct EpisodeCard: View {
                 userState.addToLoopedEpisodes(content: episode.parentContent, episode: episode)
             }
             // You might want to add a remove function as well
+        }
+    }
+    
+    private func toggleWatched() {
+        guard let userId = userState.currentUser?.id else { return }
+        
+        withAnimation {
+            isWatched.toggle()
+            if isWatched {
+                userState.markEpisodeAsWatched(episode)
+                interactionService.markEpisodeAsWatched(episode.id, userId: userId)
+                viewsCount = interactionService.getEpisodeViewsCount(episode.id)
+            } else {
+                userState.markEpisodeAsUnwatched(episode)
+                interactionService.unmarkEpisodeAsWatched(episode.id, userId: userId)
+                viewsCount = interactionService.getEpisodeViewsCount(episode.id)
+            }
         }
     }
     
@@ -563,6 +672,7 @@ struct MovieSocialSection: View {
     @Binding var comments: [Comment]
     @Binding var newComment: String
     @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -572,7 +682,7 @@ struct MovieSocialSection: View {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .foregroundColor(isLiked ? .red : .gray)
                 }
-                Text("\(likesCount) Likes")
+                Text("\(likesCount) user\(likesCount == 1 ? " has" : "s have") liked")
                     .foregroundColor(.gray)
             }
             
@@ -589,8 +699,15 @@ struct MovieSocialSection: View {
     }
     
     private func toggleLike() {
+        guard let userId = userState.currentUser?.id else { return }
+        
         isLiked.toggle()
-        likesCount += isLiked ? 1 : -1
+        if isLiked {
+            interactionService.likeContent(content.id, userId: userId)
+        } else {
+            interactionService.unlikeContent(content.id, userId: userId)
+        }
+        likesCount = interactionService.getContentLikesCount(content.id)
     }
     
     private func addComment() {
@@ -684,5 +801,6 @@ struct EpisodeSocialSection: View {
     NavigationView {
         ContentDetailView(content: MockData.shared.getSampleContent())
             .environmentObject(UserState())
+            .environmentObject(UserInteractionService.shared)
     }
 } 

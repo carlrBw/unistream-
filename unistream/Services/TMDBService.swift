@@ -20,6 +20,9 @@ struct TMDBService {
         case topRatedMovies
         case topRatedTVShows
         case nowPlayingMovies
+        case tvDetails(Int)
+        case tvSeason(Int, Int)
+        case movieDetails(Int)
         
         var path: String {
             switch self {
@@ -37,6 +40,12 @@ struct TMDBService {
                 return "/tv/top_rated"
             case .nowPlayingMovies:
                 return "/movie/now_playing"
+            case .tvDetails(let id):
+                return "/tv/\(id)"
+            case .tvSeason(let tvId, let seasonNumber):
+                return "/tv/\(tvId)/season/\(seasonNumber)"
+            case .movieDetails(let id):
+                return "/movie/\(id)"
             }
         }
     }
@@ -46,15 +55,19 @@ struct TMDBService {
         return try await withThrowingTaskGroup(of: Content.self) { group in
             var contents: [Content] = []
             
-            for movie in movies.results.prefix(10) {
+            for movie in movies.results.prefix(20) {
                 group.addTask {
                     let service = try await getStreamingService(for: movie.id, isMovie: true, title: movie.title, overview: movie.overview)
                     let posterPath = movie.posterPath ?? ""
                     let backdropPath = movie.backdropPath ?? ""
+                    
+                    // Map genre from genreIds
+                    let category = mapGenreToCategory(genreIds: movie.genreIds ?? [])
+                    
                     return Content(
                         title: movie.title,
                         service: service,
-                        category: .action,
+                        category: category,
                         thumbnailURL: "\(imageBaseURL)\(posterPath)",
                         bannerURL: "\(imageBaseURL)\(backdropPath)",
                         description: movie.overview,
@@ -80,15 +93,17 @@ struct TMDBService {
         return try await withThrowingTaskGroup(of: Content.self) { group in
             var contents: [Content] = []
             
-            for show in shows.results.prefix(10) {
+            for show in shows.results.prefix(20) {
                 group.addTask {
                     let service = try await getStreamingService(for: show.id, isMovie: false, title: show.name, overview: show.overview)
                     let posterPath = show.posterPath ?? ""
                     let backdropPath = show.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: show.genreIds ?? [])
+                    
                     let content = Content(
                         title: show.name,
                         service: service,
-                        category: .drama,
+                        category: category,
                         thumbnailURL: "\(imageBaseURL)\(posterPath)",
                         bannerURL: "\(imageBaseURL)\(backdropPath)",
                         description: show.overview,
@@ -99,8 +114,14 @@ struct TMDBService {
                         viewCount: show.voteCount
                     )
                     
+                    // Fetch real episodes from TMDB
                     var mutableContent = content
-                    mutableContent.episodes = generateSampleEpisodes(for: content)
+                    if let episodes = try? await fetchTVShowEpisodes(tvShowId: show.id, content: content) {
+                        mutableContent.episodes = episodes
+                    } else {
+                        // Fallback to sample episodes if fetch fails
+                        mutableContent.episodes = generateSampleEpisodes(for: content)
+                    }
                     return mutableContent
                 }
             }
@@ -112,21 +133,249 @@ struct TMDBService {
             return contents
         }
     }
+    
+    // Fetch real TV show episodes from TMDB
+    static func fetchTVShowEpisodes(tvShowId: Int, content: Content) async throws -> [Episode] {
+        // First get TV show details to get seasons
+        let tvDetails: TMDBTVDetails = try await fetchData(from: .tvDetails(tvShowId))
+        var allEpisodes: [Episode] = []
+        
+        // Fetch episodes for each season (limit to first 3 seasons to avoid too many API calls)
+        for season in tvDetails.seasons.prefix(3) where season.seasonNumber > 0 {
+            do {
+                let seasonData: TMDBTVSeasonDetails = try await fetchData(from: .tvSeason(tvShowId, season.seasonNumber))
+                
+                for episodeData in seasonData.episodes {
+                    let episode = Episode(
+                        title: episodeData.name,
+                        description: episodeData.overview ?? "No description available",
+                        season: episodeData.seasonNumber,
+                        episodeNumber: episodeData.episodeNumber,
+                        likes: episodeData.voteCount,
+                        comments: [],
+                        parentContent: content
+                    )
+                    allEpisodes.append(episode)
+                }
+            } catch {
+                print("Error fetching season \(season.seasonNumber): \(error)")
+                // Continue with other seasons if one fails
+            }
+        }
+        
+        return allEpisodes
+    }
+    
+    // Map TMDB genre IDs to app Category enum
+    private static func mapGenreToCategory(genreIds: [Int]) -> Category {
+        // TMDB genre IDs mapping
+        // Action: 28, Adventure: 12, Animation: 16, Comedy: 35, Crime: 80, Documentary: 99
+        // Drama: 18, Family: 10751, Fantasy: 14, History: 36, Horror: 27, Music: 10402
+        // Mystery: 9648, Romance: 10749, Sci-Fi: 878, Thriller: 53, War: 10752, Western: 37
+        
+        for genreId in genreIds {
+            switch genreId {
+            case 28, 12: // Action, Adventure
+                return .action
+            case 35: // Comedy
+                return .comedy
+            case 18, 80: // Drama, Crime
+                return .drama
+            case 878, 14: // Sci-Fi, Fantasy
+                return .scifi
+            case 27, 53: // Horror, Thriller
+                return .horror
+            case 99: // Documentary
+                return .documentary
+            case 16, 10751: // Animation, Family
+                return .kids
+            default:
+                continue
+            }
+        }
+        
+        // Default to action if no match
+        return .action
+    }
 
+    static func fetchPopularMovies() async throws -> [Content] {
+        let movies: TMDBResponse<TMDBMovie> = try await fetchData(from: .popularMovies)
+        return try await withThrowingTaskGroup(of: Content.self) { group in
+            var contents: [Content] = []
+            
+            for movie in movies.results.prefix(20) {
+                group.addTask {
+                    let service = try await getStreamingService(for: movie.id, isMovie: true, title: movie.title, overview: movie.overview)
+                    let posterPath = movie.posterPath ?? ""
+                    let backdropPath = movie.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: movie.genreIds ?? [])
+                    
+                    return Content(
+                        title: movie.title,
+                        service: service,
+                        category: category,
+                        thumbnailURL: "\(imageBaseURL)\(posterPath)",
+                        bannerURL: "\(imageBaseURL)\(backdropPath)",
+                        description: movie.overview,
+                        isTVShow: false,
+                        likes: Int.random(in: 100...1000),
+                        comments: [],
+                        episodes: nil,
+                        viewCount: movie.voteCount
+                    )
+                }
+            }
+            
+            for try await content in group {
+                contents.append(content)
+            }
+            
+            return contents
+        }
+    }
+    
+    static func fetchTopRatedMovies() async throws -> [Content] {
+        let movies: TMDBResponse<TMDBMovie> = try await fetchData(from: .topRatedMovies)
+        return try await withThrowingTaskGroup(of: Content.self) { group in
+            var contents: [Content] = []
+            
+            for movie in movies.results.prefix(20) {
+                group.addTask {
+                    let service = try await getStreamingService(for: movie.id, isMovie: true, title: movie.title, overview: movie.overview)
+                    let posterPath = movie.posterPath ?? ""
+                    let backdropPath = movie.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: movie.genreIds ?? [])
+                    
+                    return Content(
+                        title: movie.title,
+                        service: service,
+                        category: category,
+                        thumbnailURL: "\(imageBaseURL)\(posterPath)",
+                        bannerURL: "\(imageBaseURL)\(backdropPath)",
+                        description: movie.overview,
+                        isTVShow: false,
+                        likes: Int.random(in: 100...1000),
+                        comments: [],
+                        episodes: nil,
+                        viewCount: movie.voteCount
+                    )
+                }
+            }
+            
+            for try await content in group {
+                contents.append(content)
+            }
+            
+            return contents
+        }
+    }
+    
+    static func fetchPopularTVShows() async throws -> [Content] {
+        let shows: TMDBResponse<TMDBTVShow> = try await fetchData(from: .popularTVShows)
+        return try await withThrowingTaskGroup(of: Content.self) { group in
+            var contents: [Content] = []
+            
+            for show in shows.results.prefix(20) {
+                group.addTask {
+                    let service = try await getStreamingService(for: show.id, isMovie: false, title: show.name, overview: show.overview)
+                    let posterPath = show.posterPath ?? ""
+                    let backdropPath = show.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: show.genreIds ?? [])
+                    
+                    let content = Content(
+                        title: show.name,
+                        service: service,
+                        category: category,
+                        thumbnailURL: "\(imageBaseURL)\(posterPath)",
+                        bannerURL: "\(imageBaseURL)\(backdropPath)",
+                        description: show.overview,
+                        isTVShow: true,
+                        likes: Int.random(in: 100...1000),
+                        comments: [],
+                        episodes: [],
+                        viewCount: show.voteCount
+                    )
+                    
+                    // Fetch real episodes from TMDB
+                    var mutableContent = content
+                    if let episodes = try? await fetchTVShowEpisodes(tvShowId: show.id, content: content) {
+                        mutableContent.episodes = episodes
+                    } else {
+                        mutableContent.episodes = generateSampleEpisodes(for: content)
+                    }
+                    return mutableContent
+                }
+            }
+            
+            for try await content in group {
+                contents.append(content)
+            }
+            
+            return contents
+        }
+    }
+    
+    static func fetchTopRatedTVShows() async throws -> [Content] {
+        let shows: TMDBResponse<TMDBTVShow> = try await fetchData(from: .topRatedTVShows)
+        return try await withThrowingTaskGroup(of: Content.self) { group in
+            var contents: [Content] = []
+            
+            for show in shows.results.prefix(20) {
+                group.addTask {
+                    let service = try await getStreamingService(for: show.id, isMovie: false, title: show.name, overview: show.overview)
+                    let posterPath = show.posterPath ?? ""
+                    let backdropPath = show.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: show.genreIds ?? [])
+                    
+                    let content = Content(
+                        title: show.name,
+                        service: service,
+                        category: category,
+                        thumbnailURL: "\(imageBaseURL)\(posterPath)",
+                        bannerURL: "\(imageBaseURL)\(backdropPath)",
+                        description: show.overview,
+                        isTVShow: true,
+                        likes: Int.random(in: 100...1000),
+                        comments: [],
+                        episodes: [],
+                        viewCount: show.voteCount
+                    )
+                    
+                    // Fetch real episodes from TMDB
+                    var mutableContent = content
+                    if let episodes = try? await fetchTVShowEpisodes(tvShowId: show.id, content: content) {
+                        mutableContent.episodes = episodes
+                    } else {
+                        mutableContent.episodes = generateSampleEpisodes(for: content)
+                    }
+                    return mutableContent
+                }
+            }
+            
+            for try await content in group {
+                contents.append(content)
+            }
+            
+            return contents
+        }
+    }
+    
     static func fetchNowPlayingMovies() async throws -> [Content] {
         let movies: TMDBResponse<TMDBMovie> = try await fetchData(from: .nowPlayingMovies)
         return try await withThrowingTaskGroup(of: Content.self) { group in
             var contents: [Content] = []
             
-            for movie in movies.results.prefix(10) {
+            for movie in movies.results.prefix(20) {
                 group.addTask {
                     let service = try await getStreamingService(for: movie.id, isMovie: true, title: movie.title, overview: movie.overview)
                     let posterPath = movie.posterPath ?? ""
                     let backdropPath = movie.backdropPath ?? ""
+                    let category = mapGenreToCategory(genreIds: movie.genreIds ?? [])
+                    
                     return Content(
                         title: movie.title,
                         service: service,
-                        category: .action,
+                        category: category,
                         thumbnailURL: "\(imageBaseURL)\(posterPath)",
                         bannerURL: "\(imageBaseURL)\(backdropPath)",
                         description: movie.overview,

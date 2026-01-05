@@ -10,11 +10,13 @@ import SwiftUI
 @main
 struct unistreamApp: App {
     @StateObject private var userState = UserState()
+    @StateObject private var interactionService = UserInteractionService.shared
     
     var body: some Scene {                                                                                                   
         WindowGroup {
-            MainTabView()
-                .environmentObject(userState)
+                MainTabView()
+                    .environmentObject(userState)
+                    .environmentObject(interactionService)
         }
     }
 }
@@ -36,9 +38,9 @@ struct MainTabView: View {
                     }
             } else {
                 UnauthenticatedProfileView()
-                    .tabItem {
-                        Label("Profile", systemImage: "person")
-                    }
+                .tabItem {
+                    Label("Profile", systemImage: "person")
+                }
             }
             
             FavoritesLoopView()
@@ -70,6 +72,7 @@ struct SettingsTabView: View {
 // A simple profile tab for unauthenticated users showing Login and Sign Up options
 struct UnauthenticatedProfileView: View {
     @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     @State private var showingLoginView = false
     @State private var showingSignUpView = false
     
@@ -98,10 +101,12 @@ struct UnauthenticatedProfileView: View {
             .sheet(isPresented: $showingLoginView) {
                 LoginView()
                     .environmentObject(userState)
+                    .environmentObject(interactionService)
             }
             .sheet(isPresented: $showingSignUpView) {
                 SignUpView()
                     .environmentObject(userState)
+                    .environmentObject(interactionService)
             }
         }
     }
@@ -111,4 +116,5 @@ struct UnauthenticatedProfileView: View {
 #Preview {
     MainTabView()
         .environmentObject(UserState())
+        .environmentObject(UserInteractionService.shared)
 }

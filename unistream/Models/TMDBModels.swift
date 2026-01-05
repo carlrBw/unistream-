@@ -22,6 +22,7 @@ struct TMDBMovie: Codable {
     let backdropPath: String?
     let voteCount: Int
     let releaseDate: String?
+    let genreIds: [Int]?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -31,6 +32,29 @@ struct TMDBMovie: Codable {
         case backdropPath = "backdrop_path"
         case voteCount = "vote_count"
         case releaseDate = "release_date"
+        case genreIds = "genre_ids"
+    }
+}
+
+struct TMDBMovieDetails: Codable {
+    let id: Int
+    let title: String
+    let overview: String
+    let posterPath: String?
+    let backdropPath: String?
+    let voteCount: Int
+    let releaseDate: String?
+    let genres: [TMDBGenre]
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case overview
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case voteCount = "vote_count"
+        case releaseDate = "release_date"
+        case genres
     }
 }
 
@@ -42,6 +66,7 @@ struct TMDBTVShow: Codable {
     let backdropPath: String?
     let voteCount: Int
     let firstAirDate: String?
+    let genreIds: [Int]?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -51,6 +76,94 @@ struct TMDBTVShow: Codable {
         case backdropPath = "backdrop_path"
         case voteCount = "vote_count"
         case firstAirDate = "first_air_date"
+        case genreIds = "genre_ids"
+    }
+}
+
+struct TMDBTVSeason: Codable {
+    let id: Int
+    let name: String
+    let overview: String?
+    let seasonNumber: Int
+    let episodeCount: Int
+    let airDate: String?
+    let posterPath: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case overview
+        case seasonNumber = "season_number"
+        case episodeCount = "episode_count"
+        case airDate = "air_date"
+        case posterPath = "poster_path"
+    }
+}
+
+struct TMDBTVEpisode: Codable {
+    let id: Int
+    let name: String
+    let overview: String?
+    let episodeNumber: Int
+    let seasonNumber: Int
+    let airDate: String?
+    let stillPath: String?
+    let voteCount: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case overview
+        case episodeNumber = "episode_number"
+        case seasonNumber = "season_number"
+        case airDate = "air_date"
+        case stillPath = "still_path"
+        case voteCount = "vote_count"
+    }
+}
+
+struct TMDBTVDetails: Codable {
+    let id: Int
+    let name: String
+    let overview: String
+    let posterPath: String?
+    let backdropPath: String?
+    let voteCount: Int
+    let firstAirDate: String?
+    let seasons: [TMDBTVSeason]
+    let genres: [TMDBGenre]
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case overview
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case voteCount = "vote_count"
+        case firstAirDate = "first_air_date"
+        case seasons
+        case genres
+    }
+}
+
+struct TMDBGenre: Codable {
+    let id: Int
+    let name: String
+}
+
+struct TMDBTVSeasonDetails: Codable {
+    let id: Int
+    let name: String
+    let overview: String?
+    let seasonNumber: Int
+    let episodes: [TMDBTVEpisode]
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case overview
+        case seasonNumber = "season_number"
+        case episodes
     }
 }
 

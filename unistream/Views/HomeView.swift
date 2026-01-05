@@ -3,6 +3,9 @@ import UIKit
 
 struct HomeView: View {
     @StateObject private var mockData = MockData.shared
+    @StateObject private var colorExtractor = ImageColorExtractor()
+    @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     @State private var currentBannerIndex = 1  // Start at 1 to show first real item
     @State private var scrollOffset: CGFloat = 0
     @State private var showTitle = true
@@ -12,6 +15,11 @@ struct HomeView: View {
         guard !mockData.featured.isEmpty else { return [] }
         // Add last item at start and first item at end for smooth looping
         return [mockData.featured.last!] + mockData.featured + [mockData.featured.first!]
+    }
+    
+    var currentCarouselContent: Content? {
+        guard !carouselItems.isEmpty, currentBannerIndex < carouselItems.count else { return nil }
+        return carouselItems[currentBannerIndex]
     }
     
     var body: some View {
@@ -67,10 +75,20 @@ struct HomeView: View {
                                 .frame(height: 200)
                                 .onChange(of: currentBannerIndex) { oldValue, newValue in
                                     handleIndexChange(newValue)
+                                    // Update background colors when carousel changes
+                                    if let content = currentCarouselContent {
+                                        colorExtractor.extractColors(from: content.bannerURL)
+                                    }
                                 }
                                 .onReceive(timer) { _ in
                                     withAnimation {
                                         currentBannerIndex += 1
+                                    }
+                                }
+                                .onAppear {
+                                    // Extract colors for initial image
+                                    if let content = currentCarouselContent {
+                                        colorExtractor.extractColors(from: content.bannerURL)
                                     }
                                 }
                             }
@@ -79,7 +97,11 @@ struct HomeView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
                                     ForEach(StreamingService.allCases, id: \.self) { service in
-                                        ServiceIcon(service: service)
+                                        NavigationLink(destination: ServiceDetailView(service: service)
+                                            .environmentObject(userState)
+                                            .environmentObject(interactionService)) {
+                                            ServiceIcon(service: service)
+                                        }
                                     }
                                 }
                                 .padding(.horizontal)
@@ -130,10 +152,13 @@ struct HomeView: View {
                 }
             }
             .background(
-                LinearGradient(gradient: Gradient(colors: [.blue.opacity(0.8), .black]),
-                             startPoint: .top,
-                             endPoint: .bottom)
+                LinearGradient(
+                    gradient: Gradient(colors: colorExtractor.dominantColors),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
                 .ignoresSafeArea()
+                .animation(.easeInOut(duration: 1.0), value: colorExtractor.dominantColors)
             )
             .navigationTitle(showTitle ? "Unistream" : "")
             .navigationBarTitleDisplayMode(.inline)

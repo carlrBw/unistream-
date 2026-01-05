@@ -6,6 +6,8 @@ class UserState: ObservableObject {
     @Published var myList: [Content] = []
     @Published var loopedEpisodes: [(content: Content, episode: Episode)] = []
     @Published var loopedSeries: [Content] = []
+    @Published var watchedEpisodes: [UUID] = [] // Track watched episode IDs
+    @Published var watchedMovies: [UUID] = [] // Track watched movie IDs
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     
@@ -15,6 +17,8 @@ class UserState: ObservableObject {
     init() {
         isLoading = true
         loadSavedData()
+        loadWatchedEpisodes()
+        loadWatchedMovies()
         isLoading = false
     }
     
@@ -77,6 +81,62 @@ class UserState: ObservableObject {
         }
     }
     
+    func markEpisodeAsWatched(_ episode: Episode) {
+        if !watchedEpisodes.contains(episode.id) {
+            watchedEpisodes.append(episode.id)
+            saveWatchedEpisodes()
+        }
+    }
+    
+    func markEpisodeAsUnwatched(_ episode: Episode) {
+        watchedEpisodes.removeAll(where: { $0 == episode.id })
+        saveWatchedEpisodes()
+    }
+    
+    func isEpisodeWatched(_ episode: Episode) -> Bool {
+        return watchedEpisodes.contains(episode.id)
+    }
+    
+    private func saveWatchedEpisodes() {
+        guard !isLoading else { return }
+        // Save watched episodes to UserDefaults
+        UserDefaults.standard.set(watchedEpisodes.map { $0.uuidString }, forKey: "watchedEpisodes")
+    }
+    
+    private func loadWatchedEpisodes() {
+        if let episodeIds = UserDefaults.standard.array(forKey: "watchedEpisodes") as? [String] {
+            watchedEpisodes = episodeIds.compactMap { UUID(uuidString: $0) }
+        }
+    }
+    
+    func markMovieAsWatched(_ content: Content) {
+        if !watchedMovies.contains(content.id) {
+            watchedMovies.append(content.id)
+            saveWatchedMovies()
+        }
+    }
+    
+    func markMovieAsUnwatched(_ content: Content) {
+        watchedMovies.removeAll(where: { $0 == content.id })
+        saveWatchedMovies()
+    }
+    
+    func isMovieWatched(_ content: Content) -> Bool {
+        return watchedMovies.contains(content.id)
+    }
+    
+    private func saveWatchedMovies() {
+        guard !isLoading else { return }
+        // Save watched movies to UserDefaults
+        UserDefaults.standard.set(watchedMovies.map { $0.uuidString }, forKey: "watchedMovies")
+    }
+    
+    private func loadWatchedMovies() {
+        if let movieIds = UserDefaults.standard.array(forKey: "watchedMovies") as? [String] {
+            watchedMovies = movieIds.compactMap { UUID(uuidString: $0) }
+        }
+    }
+    
     func signIn(email: String, password: String) async throws {
         // Simulate network request
         try await Task.sleep(for: .seconds(1))
@@ -108,7 +168,11 @@ class UserState: ObservableObject {
         myList = []
         loopedEpisodes = []
         loopedSeries = []
+        watchedEpisodes = []
+        watchedMovies = []
         persistence.clearAllData()
+        UserDefaults.standard.removeObject(forKey: "watchedEpisodes")
+        UserDefaults.standard.removeObject(forKey: "watchedMovies")
     }
     
     func signUp(username: String, email: String, password: String) async throws {

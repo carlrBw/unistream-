@@ -26,7 +26,6 @@
 		3AE1BCC82D73B74100B494CE /* TMDBModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE1BCC72D73B74100B494CE /* TMDBModels.swift */; };
 		3AE1BCCB2D73BE3800B494CE /* TMDBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE1BCC92D73BE3800B494CE /* TMDBService.swift */; };
 		3AE1BCCD2D7B87F500B494CE /* StreamingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE1BCCC2D7B87F400B494CE /* StreamingService.swift */; };
-		3AF65B062D7B87F600B494CE /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B062D7B87F600B494CF /* PersistenceService.swift */; };
 		3AF65AF12D70B3C900AF6CD3 /* ContentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65AF02D70B3C800AF6CD3 /* ContentDetailView.swift */; };
 		3AF65AF52D716B6200AF6CD3 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65AF42D716B6200AF6CD3 /* UserProfileView.swift */; };
 		3AF65AF72D716C4400AF6CD3 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65AF62D716C4400AF6CD3 /* User.swift */; };
@@ -34,6 +33,10 @@
 		3AF65AFB2D723F2C00AF6CD3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65AFA2D723F2B00AF6CD3 /* Theme.swift */; };
 		3AF65AFD2D72416A00AF6CD3 /* UserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65AFC2D72416A00AF6CD3 /* UserState.swift */; };
 		3AF65B052D729C4100AF6CD3 /* ContentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B032D729C4100AF6CD3 /* ContentCard.swift */; };
+		3AF65B062D7B87F600B494CE /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B062D7B87F600B494CF /* PersistenceService.swift */; };
+		3AF65B072D7B87F700B494CE /* UserInteractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B072D7B87F700B494CF /* UserInteractionService.swift */; };
+		3AF65B082D7B87F800B494CE /* ServiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */; };
+		3AF65B092D7B87F900B494CE /* ImageColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,7 +79,6 @@
 		3AE1BCC72D73B74100B494CE /* TMDBModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TMDBModels.swift; sourceTree = "<group>"; };
 		3AE1BCC92D73BE3800B494CE /* TMDBService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TMDBService.swift; sourceTree = "<group>"; };
 		3AE1BCCC2D7B87F400B494CE /* StreamingService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StreamingService.swift; sourceTree = "<group>"; };
-		3AF65B062D7B87F600B494CF /* PersistenceService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
 		3AF65AF02D70B3C800AF6CD3 /* ContentDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentDetailView.swift; sourceTree = "<group>"; };
 		3AF65AF42D716B6200AF6CD3 /* UserProfileView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
 		3AF65AF62D716C4400AF6CD3 /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
@@ -84,6 +86,10 @@
 		3AF65AFA2D723F2B00AF6CD3 /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		3AF65AFC2D72416A00AF6CD3 /* UserState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserState.swift; sourceTree = "<group>"; };
 		3AF65B032D729C4100AF6CD3 /* ContentCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentCard.swift; sourceTree = "<group>"; };
+		3AF65B062D7B87F600B494CF /* PersistenceService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		3AF65B072D7B87F700B494CF /* UserInteractionService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserInteractionService.swift; sourceTree = "<group>"; };
+		3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ServiceDetailView.swift; sourceTree = "<group>"; };
+		3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageColorExtractor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +141,8 @@
 				3A0A1F552D6FDB34007DD113 /* HomeView.swift */,
 				3A3626132D8332F000C9BF18 /* LoginView.swift */,
 				3A0A1F562D6FDB34007DD113 /* SearchView.swift */,
+				3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */,
+				3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */,
 				3A3626112D8330D600C9BF18 /* SignUpView.swift */,
 				3AF65AF82D71F0AD00AF6CD3 /* SubscriptionCard.swift */,
 				3A0A1F612D70AA13007DD113 /* SubscriptionsView.swift */,
@@ -208,6 +216,7 @@
 				3A3626152D85E02700C9BF18 /* SocialAuthService.swift */,
 				3AE1BCC92D73BE3800B494CE /* TMDBService.swift */,
 				3AF65B062D7B87F600B494CF /* PersistenceService.swift */,
+				3AF65B072D7B87F700B494CF /* UserInteractionService.swift */,
 			);
 			name = Services;
 			path = unistream/Services;
@@ -285,7 +294,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
-				LastUpgradeCheck = 1540;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					3A21C9122D6FCA8E00C9B4AB = {
 						CreatedOnToolsVersion = 15.4;
@@ -359,11 +368,14 @@
 				3AF65B052D729C4100AF6CD3 /* ContentCard.swift in Sources */,
 				3A0A1F602D70A9E5007DD113 /* SubscriptionData.swift in Sources */,
 				3A0A1F5C2D6FFB2B007DD113 /* HomeView.swift in Sources */,
+				3AF65B082D7B87F800B494CE /* ServiceDetailView.swift in Sources */,
+				3AF65B092D7B87F900B494CE /* ImageColorExtractor.swift in Sources */,
 				3A0A1F532D6FDB0D007DD113 /* MockData.swift in Sources */,
 				3A3626122D8330D600C9BF18 /* SignUpView.swift in Sources */,
 				3AF65AFB2D723F2C00AF6CD3 /* Theme.swift in Sources */,
 				3AE1BCCB2D73BE3800B494CE /* TMDBService.swift in Sources */,
 				3AF65B062D7B87F600B494CE /* PersistenceService.swift in Sources */,
+				3AF65B072D7B87F700B494CE /* UserInteractionService.swift in Sources */,
 				3AE1BCC82D73B74100B494CE /* TMDBModels.swift in Sources */,
 				3AF65AF92D71F0AD00AF6CD3 /* SubscriptionCard.swift in Sources */,
 				3A0A1F5B2D6FDD86007DD113 /* Content.swift in Sources */,
@@ -447,6 +459,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -470,6 +483,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -510,6 +524,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -526,6 +541,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -539,7 +555,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"unistream/Preview Content\"";
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -568,7 +583,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"unistream/Preview Content\"";
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -592,11 +606,9 @@
 		3A21C93B2D6FCA9100C9B4AB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
@@ -612,11 +624,9 @@
 		3A21C93C2D6FCA9100C9B4AB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
@@ -632,10 +642,8 @@
 		3A21C93E2D6FCA9100C9B4AB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unistream.unistreamUITests;
@@ -650,10 +658,8 @@
 		3A21C93F2D6FCA9100C9B4AB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WU6JWW8UJ9;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.unistream.unistreamUITests;

@@ -148,6 +148,8 @@ struct LoginView: View {
             }
             .sheet(isPresented: $isShowingSignUp) {
                 SignUpView()
+                    .environmentObject(userState)
+                    .environmentObject(UserInteractionService.shared)
             }
         }
     }

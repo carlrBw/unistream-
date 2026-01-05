@@ -400,20 +400,20 @@ struct EpisodeCard: View {
             Button(action: action) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Episode \(episode.episodeNumber)")
+                        Text(episode.title)
                             .font(.headline)
                             .foregroundColor(.white)
                         
                         Spacer()
                         
-                        Text(episode.title)
+                        Text("Episode \(episode.episodeNumber)")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                         
                         Button(action: toggleLoop) {
                             Image(systemName: isLooped ? "infinity.circle.fill" : "infinity.circle")
-                                .foregroundColor(isLooped ? .blue : .gray)
-                                .imageScale(.large)
+                            .foregroundColor(isLooped ? .blue : .gray)
+                            .imageScale(.large)
                         }
                     }
                     

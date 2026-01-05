@@ -169,9 +169,11 @@ struct TMDBTVSeasonDetails: Codable {
 
 // Watch Providers Models
 struct TMDBWatchProviders: Codable {
+    let id: Int?
     let results: [String: TMDBWatchProviderCountry]
     
     enum CodingKeys: String, CodingKey {
+        case id
         case results
     }
 }

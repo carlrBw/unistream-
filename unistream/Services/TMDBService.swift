@@ -367,7 +367,25 @@ struct TMDBService {
             
             for movie in movies.results.prefix(20) {
                 group.addTask {
-                    let service = try await getStreamingService(for: movie.id, isMovie: true, title: movie.title, overview: movie.overview)
+                    // Movies in "now playing" should be "In Theaters" unless they have streaming providers
+                    let service: StreamingService
+                    do {
+                        let providers = try await fetchWatchProviders(for: movie.id, isMovie: true)
+                        // If no streaming providers found, it's theater-only
+                        if providers.isEmpty {
+                            service = .inTheaters
+                        } else if let streamingService = mapProviderToService(providers: providers) {
+                            // If streaming providers exist, use the first one
+                            service = streamingService
+                        } else {
+                            // No recognized streaming provider, default to theaters
+                            service = .inTheaters
+                        }
+                    } catch {
+                        // If API call fails, default to theaters for now playing movies
+                        service = .inTheaters
+                    }
+                    
                     let posterPath = movie.posterPath ?? ""
                     let backdropPath = movie.backdropPath ?? ""
                     let category = mapGenreToCategory(genreIds: movie.genreIds ?? [])
@@ -442,50 +460,91 @@ struct TMDBService {
         }
     }
     
-    // Get streaming service using watch providers API, fallback to pattern matching
+    // Get streaming service using watch providers API, fallback only if absolutely necessary
     private static func getStreamingService(for id: Int, isMovie: Bool, title: String, overview: String) async throws -> StreamingService {
-        // Try to fetch watch providers first
+        // Always try to fetch watch providers first - this is the most accurate source
         do {
             let providers = try await fetchWatchProviders(for: id, isMovie: isMovie)
-            if let service = mapProviderToService(providers: providers) {
-                return service
+            if !providers.isEmpty {
+                if let service = mapProviderToService(providers: providers) {
+                    print("✅ Assigned \(title) to \(service.rawValue) via watch providers")
+                    return service
+                } else {
+                    print("⚠️ Watch providers found for \(title) but no matching service: \(providers.map { $0.name }.joined(separator: ", "))")
+                }
+            } else {
+                print("⚠️ No watch providers found for \(title) - may be theater-only or not yet available")
             }
         } catch {
-            // If watch providers fail, fall back to pattern matching
-            print("Failed to fetch watch providers for \(title), using pattern matching")
+            print("❌ Failed to fetch watch providers for \(title): \(error.localizedDescription)")
         }
         
-        // Fallback to improved pattern matching
-        return assignStreamingService(for: title, overview: overview)
+        // Only use pattern matching as last resort for known originals
+        // Don't use random assignment - it's inaccurate
+        if let service = assignStreamingService(for: title, overview: overview) {
+            print("📝 Assigned \(title) to \(service.rawValue) via pattern matching")
+            return service
+        }
+        
+        // If we can't determine from watch providers or patterns, 
+        // check if it might be theater-only (for movies)
+        if isMovie {
+            print("❓ Could not determine streaming service for movie \(title), may be theater-only")
+            // For movies without streaming providers, it's likely theater-only
+            return .inTheaters
+        }
+        
+        // For TV shows, default to a neutral service if we can't determine
+        print("❓ Could not determine service for \(title), defaulting to Prime Video")
+        return .prime // Default fallback for TV shows
     }
     
     // Fetch watch providers for a movie or TV show
+    // Reference: https://developer.themoviedb.org/reference/movie-watch-providers
     private static func fetchWatchProviders(for id: Int, isMovie: Bool) async throws -> [TMDBProvider] {
         let endpoint = isMovie ? "/movie/\(id)/watch/providers" : "/tv/\(id)/watch/providers"
         let providers: TMDBWatchProviders = try await fetchDataFromPath(endpoint)
         
-        // Get US providers (most common)
-        if let usProviders = providers.results["US"] {
-            var allProviders: [TMDBProvider] = []
-            if let flatrate = usProviders.flatrate {
-                allProviders.append(contentsOf: flatrate)
+        // Priority order: US > CA > GB > first available country
+        let preferredCountries = ["US", "CA", "GB"]
+        
+        // Try preferred countries first
+        for countryCode in preferredCountries {
+            if let countryProviders = providers.results[countryCode] {
+                var allProviders: [TMDBProvider] = []
+                // Prioritize flatrate (subscription) providers
+                if let flatrate = countryProviders.flatrate {
+                    allProviders.append(contentsOf: flatrate)
+                }
+                // Then add buy options as fallback
+                if let buy = countryProviders.buy {
+                    allProviders.append(contentsOf: buy)
+                }
+                // Finally add rent options
+                if let rent = countryProviders.rent {
+                    allProviders.append(contentsOf: rent)
+                }
+                if !allProviders.isEmpty {
+                    return allProviders
+                }
             }
-            if let buy = usProviders.buy {
-                allProviders.append(contentsOf: buy)
-            }
-            return allProviders
         }
         
-        // If no US providers, try to get from first available country
-        if let firstCountry = providers.results.values.first {
+        // If no preferred country providers, try any available country
+        for countryProviders in providers.results.values {
             var allProviders: [TMDBProvider] = []
-            if let flatrate = firstCountry.flatrate {
+            if let flatrate = countryProviders.flatrate {
                 allProviders.append(contentsOf: flatrate)
             }
-            if let buy = firstCountry.buy {
+            if let buy = countryProviders.buy {
                 allProviders.append(contentsOf: buy)
             }
-            return allProviders
+            if let rent = countryProviders.rent {
+                allProviders.append(contentsOf: rent)
+            }
+            if !allProviders.isEmpty {
+                return allProviders
+            }
         }
         
         return []
@@ -513,122 +572,114 @@ struct TMDBService {
     }
     
     // Map TMDB provider IDs to our StreamingService enum
+    // Reference: https://developer.themoviedb.org/reference/movie-watch-providers
     private static func mapProviderToService(providers: [TMDBProvider]) -> StreamingService? {
-        // TMDB provider ID mapping
+        // TMDB provider ID mapping - official IDs from TMDB API
+        // These IDs are from the watch/providers endpoint
         let providerMapping: [Int: StreamingService] = [
-            8: .netflix,        // Netflix
-            337: .disney,       // Disney+
-            15: .hulu,          // Hulu
-            531: .paramount,   // Paramount+
-            350: .appleTV,      // Apple TV+
-            9: .prime,          // Prime Video
-            384: .hboMax,       // Max (HBO Max)
-            386: .peacock       // Peacock
+            // Netflix
+            8: .netflix,
+            // Disney+
+            337: .disney,
+            // Hulu
+            15: .hulu,
+            // Paramount+
+            531: .paramount,
+            // Apple TV+
+            350: .appleTV,
+            // Prime Video
+            9: .prime,
+            // Max (formerly HBO Max)
+            384: .hboMax,
+            // Peacock
+            386: .peacock
         ]
         
-        // Check providers in order of preference (flatrate first, then buy)
+        // Check providers in order - first match wins
+        // Providers are already ordered by priority (flatrate first, then buy, then rent)
         for provider in providers {
             if let service = providerMapping[provider.id] {
+                print("✅ Mapped provider \(provider.name) (ID: \(provider.id)) to \(service.rawValue)")
                 return service
             }
         }
         
+        // Log all providers for debugging
+        let providerList = providers.map { "\($0.name) (ID: \($0.id))" }.joined(separator: ", ")
+        print("⚠️ No matching provider found. Available providers: \(providerList.isEmpty ? "none" : providerList)")
         return nil
     }
     
-    private static func assignStreamingService(for title: String, overview: String) -> StreamingService {
+    private static func assignStreamingService(for title: String, overview: String) -> StreamingService? {
+        // Only use pattern matching for known originals/exclusives
+        // This should be a last resort - watch providers API is preferred
+        
+        // Apple TV+ originals - be specific
+        let applePatterns = ["Ted Lasso", "The Morning Show", "Foundation", "See", "For All Mankind", "Pluribus"]
+        for pattern in applePatterns {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
+                return .appleTV
+            }
+        }
+        
         // Disney+ content patterns
         let disneyPatterns = ["Marvel", "Star Wars", "Disney", "Pixar", "National Geographic"]
         for pattern in disneyPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .disney
             }
         }
         
-        // Netflix Originals patterns
-        let netflixPatterns = ["Netflix Original", "Stranger Things", "Bridgerton", "The Witcher", "The Crown"]
+        // Netflix Originals patterns - be specific
+        let netflixPatterns = ["Stranger Things", "Bridgerton", "The Witcher", "The Crown", "Squid Game"]
         for pattern in netflixPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .netflix
             }
         }
         
         // HBO Max patterns
-        let hboPatterns = ["HBO", "House of the Dragon", "The Last of Us", "Succession", "Warner"]
+        let hboPatterns = ["House of the Dragon", "The Last of Us", "Succession", "Game of Thrones"]
         for pattern in hboPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .hboMax
             }
         }
         
-        // Apple TV+ patterns
-        let applePatterns = ["Apple Original", "Ted Lasso", "The Morning Show", "Foundation"]
-        for pattern in applePatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
-                return .appleTV
-            }
-        }
-        
         // Paramount+ patterns
-        let paramountPatterns = ["Paramount", "Star Trek", "Yellowstone", "SpongeBob"]
+        let paramountPatterns = ["Star Trek", "Yellowstone", "1883", "1923"]
         for pattern in paramountPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .paramount
             }
         }
         
         // Hulu patterns
-        let huluPatterns = ["FX", "The Handmaid's Tale", "Only Murders in the Building"]
+        let huluPatterns = ["The Handmaid's Tale", "Only Murders in the Building", "The Bear"]
         for pattern in huluPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .hulu
             }
         }
         
         // Prime Video patterns
-        let primePatterns = ["Amazon Original", "The Boys", "Lord of the Rings", "The Wheel of Time"]
+        let primePatterns = ["The Boys", "The Wheel of Time", "The Rings of Power"]
         for pattern in primePatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .prime
             }
         }
         
         // Peacock patterns
-        let peacockPatterns = ["NBC", "Universal", "The Office", "Brooklyn Nine-Nine"]
+        let peacockPatterns = ["The Office", "Brooklyn Nine-Nine", "Yellowjackets"]
         for pattern in peacockPatterns {
-            if title.contains(pattern) || overview.contains(pattern) {
+            if title.localizedCaseInsensitiveContains(pattern) || overview.localizedCaseInsensitiveContains(pattern) {
                 return .peacock
             }
         }
         
-        // If no specific match, use weighted random assignment
-        return assignRandomService()
-    }
-    
-    private static func assignRandomService() -> StreamingService {
-        // Weighted distribution to make some services more common
-        let services: [(StreamingService, Double)] = [
-            (.netflix, 0.2),
-            (.disney, 0.15),
-            (.hulu, 0.15),
-            (.prime, 0.15),
-            (.appleTV, 0.1),
-            (.hboMax, 0.1),
-            (.paramount, 0.1),
-            (.peacock, 0.05)
-        ]
-        
-        let total = services.reduce(0) { $0 + $1.1 }
-        var random = Double.random(in: 0..<total)
-        
-        for (service, weight) in services {
-            random -= weight
-            if random <= 0 {
-                return service
-            }
-        }
-        
-        return .netflix // Fallback
+        // Return nil if no match - don't guess
+        return nil
     }
     
     private static func generateSampleEpisodes(for content: Content) -> [Episode] {

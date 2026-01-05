@@ -4,6 +4,8 @@ import UIKit
 struct HomeView: View {
     @StateObject private var mockData = MockData.shared
     @State private var currentBannerIndex = 1  // Start at 1 to show first real item
+    @State private var scrollOffset: CGFloat = 0
+    @State private var showTitle = true
     let timer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
     
     var carouselItems: [Content] {
@@ -47,6 +49,11 @@ struct HomeView: View {
                     }
                 } else {
                     ScrollView {
+                        GeometryReader { geometry in
+                            Color.clear.preference(key: ScrollOffsetPreferenceKey.self, value: geometry.frame(in: .named("scroll")).minY)
+                        }
+                        .frame(height: 0)
+                        
                         VStack(alignment: .leading, spacing: 30) {
                             // Featured carousel
                             if !mockData.featured.isEmpty {
@@ -106,6 +113,20 @@ struct HomeView: View {
                         }
                         .padding(.vertical)
                     }
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        let offset = value
+                        let threshold: CGFloat = 50
+                        
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            if offset < -threshold && showTitle {
+                                showTitle = false
+                            } else if offset >= -threshold && !showTitle {
+                                showTitle = true
+                            }
+                        }
+                        scrollOffset = offset
+                    }
                 }
             }
             .background(
@@ -114,7 +135,7 @@ struct HomeView: View {
                              endPoint: .bottom)
                 .ignoresSafeArea()
             )
-            .navigationTitle("Unistream")
+            .navigationTitle(showTitle ? "Unistream" : "")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -209,6 +230,14 @@ struct ServiceIcon: View {
                 .multilineTextAlignment(.center)
         }
         .frame(width: 60)
+    }
+}
+
+// PreferenceKey to track scroll offset
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

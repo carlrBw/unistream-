@@ -68,11 +68,18 @@ struct HomeView: View {
                                 TabView(selection: $currentBannerIndex) {
                                     ForEach(Array(carouselItems.enumerated()), id: \.offset) { index, content in
                                         FeaturedBanner(content: content)
+                                            .environmentObject(colorExtractor)
+                                            .environmentObject(userState)
+                                            .environmentObject(interactionService)
                                             .tag(index)
                                     }
                                 }
                                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                                .frame(height: 200)
+                                .frame(height: 500)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 0)
+                                .padding(.vertical, 0)
+                                .edgesIgnoringSafeArea(.vertical)
                                 .onChange(of: currentBannerIndex) { oldValue, newValue in
                                     handleIndexChange(newValue)
                                     // Update background colors when carousel changes
@@ -100,7 +107,7 @@ struct HomeView: View {
                                         NavigationLink(destination: ServiceDetailView(service: service)
                                             .environmentObject(userState)
                                             .environmentObject(interactionService)) {
-                                            ServiceIcon(service: service)
+                                        ServiceIcon(service: service)
                                         }
                                     }
                                 }
@@ -154,7 +161,7 @@ struct HomeView: View {
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: colorExtractor.dominantColors),
-                    startPoint: .top,
+                             startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
@@ -165,9 +172,9 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SearchView()) {
-                        Image(systemName: "magnifyingglass")
-                            .imageScale(.large)
-                    }
+                    Image(systemName: "magnifyingglass")
+                        .imageScale(.large)
+                }
                 }
             }
             .onAppear {
@@ -228,19 +235,19 @@ struct ServiceIcon: View {
                     .frame(width: 40, height: 40)
                     .foregroundColor(service.color)
             } else if !service.logoURL.isEmpty {
-                AsyncImage(url: URL(string: service.logoURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 40, height: 40)
-                } placeholder: {
-                    Circle()
-                        .fill(service.color)
-                        .frame(width: 40, height: 40)
-                        .overlay(
-                            ProgressView()
-                                .tint(.white)
-                        )
+            AsyncImage(url: URL(string: service.logoURL)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+            } placeholder: {
+                Circle()
+                    .fill(service.color)
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        ProgressView()
+                            .tint(.white)
+                    )
                 }
             } else {
                 Circle()
@@ -268,10 +275,16 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 
 struct FeaturedBanner: View {
     let content: Content
+    @EnvironmentObject var colorExtractor: ImageColorExtractor
+    @EnvironmentObject var userState: UserState
+    @EnvironmentObject var interactionService: UserInteractionService
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottomLeading) {
+        NavigationLink(destination: ContentDetailView(content: content)
+            .environmentObject(userState)
+            .environmentObject(interactionService)) {
+            GeometryReader { geometry in
+                ZStack(alignment: .bottomLeading) {
                 AsyncImage(url: URL(string: content.bannerURL)) { image in
                     image
                         .resizable()
@@ -283,7 +296,37 @@ struct FeaturedBanner: View {
                 }
                 .clipped()
                 
-                // Gradient overlay
+                // Top fade gradient - blends with background
+                VStack(spacing: 0) {
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: colorExtractor.dominantColors.first ?? .black, location: 0.0),
+                            .init(color: (colorExtractor.dominantColors.first ?? .black).opacity(0.8), location: 0.3),
+                            .init(color: (colorExtractor.dominantColors.first ?? .black).opacity(0.4), location: 0.6),
+                            .init(color: .clear, location: 1.0)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 120)
+                    
+                    Spacer()
+                    
+                    // Bottom fade gradient - blends with background
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: .clear, location: 0.0),
+                            .init(color: (colorExtractor.dominantColors.last ?? .black).opacity(0.4), location: 0.4),
+                            .init(color: (colorExtractor.dominantColors.last ?? .black).opacity(0.8), location: 0.7),
+                            .init(color: colorExtractor.dominantColors.last ?? .black, location: 1.0)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 120)
+                }
+                
+                // Bottom content gradient overlay (for text readability)
                 LinearGradient(
                     gradient: Gradient(colors: [
                         .clear,
@@ -316,10 +359,11 @@ struct FeaturedBanner: View {
                 }
                 .foregroundColor(.white)
                 .padding()
+                }
             }
+            .edgesIgnoringSafeArea(.vertical)
         }
-        .cornerRadius(10)
-        .padding(.horizontal)
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

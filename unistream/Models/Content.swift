@@ -13,8 +13,9 @@ struct Content: Identifiable {
     var comments: [Comment]
     var episodes: [Episode]?
     var viewCount: Int
+    var tmdbId: Int? // TMDB ID for fetching videos and additional data
     
-    init(id: UUID = UUID(), title: String, service: StreamingService, category: Category, thumbnailURL: String, bannerURL: String, description: String, isTVShow: Bool, likes: Int, comments: [Comment], episodes: [Episode]?, viewCount: Int) {
+    init(id: UUID = UUID(), title: String, service: StreamingService, category: Category, thumbnailURL: String, bannerURL: String, description: String, isTVShow: Bool, likes: Int, comments: [Comment], episodes: [Episode]?, viewCount: Int, tmdbId: Int? = nil) {
         self.id = id
         self.title = title
         self.service = service
@@ -27,6 +28,7 @@ struct Content: Identifiable {
         self.comments = comments
         self.episodes = episodes
         self.viewCount = viewCount
+        self.tmdbId = tmdbId
     }
 }
 
@@ -102,6 +104,7 @@ struct CodableContent: Codable {
     let isTVShow: Bool
     let likes: Int
     let viewCount: Int
+    let tmdbId: Int?
 }
 
 struct CodableComment: Codable {
@@ -135,7 +138,8 @@ extension Content {
             description: description,
             isTVShow: isTVShow,
             likes: likes,
-            viewCount: viewCount
+            viewCount: viewCount,
+            tmdbId: tmdbId
         )
     }
     
@@ -152,7 +156,8 @@ extension Content {
             likes: codable.likes,
             comments: [],
             episodes: nil,
-            viewCount: codable.viewCount
+            viewCount: codable.viewCount,
+            tmdbId: codable.tmdbId
         )
     }
 }

@@ -23,6 +23,8 @@ struct TMDBService {
         case tvDetails(Int)
         case tvSeason(Int, Int)
         case movieDetails(Int)
+        case movieVideos(Int)
+        case tvVideos(Int)
         
         var path: String {
             switch self {
@@ -46,6 +48,10 @@ struct TMDBService {
                 return "/tv/\(tvId)/season/\(seasonNumber)"
             case .movieDetails(let id):
                 return "/movie/\(id)"
+            case .movieVideos(let id):
+                return "/movie/\(id)/videos"
+            case .tvVideos(let id):
+                return "/tv/\(id)/videos"
             }
         }
     }
@@ -75,7 +81,8 @@ struct TMDBService {
                         likes: Int.random(in: 100...1000),
                         comments: [],
                         episodes: nil,
-                        viewCount: movie.voteCount
+                        viewCount: movie.voteCount,
+                        tmdbId: movie.id
                     )
                 }
             }
@@ -111,7 +118,8 @@ struct TMDBService {
                         likes: Int.random(in: 100...1000),
                         comments: [],
                         episodes: [],
-                        viewCount: show.voteCount
+                        viewCount: show.voteCount,
+                        tmdbId: show.id
                     )
                     
                     // Fetch real episodes from TMDB
@@ -293,7 +301,8 @@ struct TMDBService {
                         likes: Int.random(in: 100...1000),
                         comments: [],
                         episodes: [],
-                        viewCount: show.voteCount
+                        viewCount: show.voteCount,
+                        tmdbId: show.id
                     )
                     
                     // Fetch real episodes from TMDB
@@ -338,7 +347,8 @@ struct TMDBService {
                         likes: Int.random(in: 100...1000),
                         comments: [],
                         episodes: [],
-                        viewCount: show.voteCount
+                        viewCount: show.voteCount,
+                        tmdbId: show.id
                     )
                     
                     // Fetch real episodes from TMDB
@@ -693,6 +703,29 @@ struct TMDBService {
                 comments: [],
                 parentContent: content
             )
+        }
+    }
+    
+    // Fetch videos (trailers) for a movie or TV show
+    static func fetchVideos(for id: Int, isMovie: Bool) async throws -> [TMDBVideo] {
+        let endpoint = isMovie ? Endpoint.movieVideos(id) : Endpoint.tvVideos(id)
+        let response: TMDBVideoResponse = try await fetchData(from: endpoint)
+        
+        // Filter for YouTube trailers (most common)
+        // Prioritize official trailers, then trailers, then teasers
+        let trailers = response.results.filter { video in
+            video.site == "YouTube" && (video.type == "Trailer" || video.type == "Teaser")
+        }
+        
+        // Sort: official first, then by type (Trailer > Teaser)
+        return trailers.sorted { first, second in
+            if first.official != second.official {
+                return first.official
+            }
+            if first.type != second.type {
+                return first.type == "Trailer"
+            }
+            return false
         }
     }
 } 

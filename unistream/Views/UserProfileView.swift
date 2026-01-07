@@ -111,6 +111,9 @@ struct UserProfileView: View {
                     }
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            EmptyView()
+                        }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("Done") {
                                 dismiss()
@@ -326,19 +329,19 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 30) {
                 // Account Settings Section - Only show if logged in
                 if user != nil {
-                    VStack(alignment: .leading, spacing: 15) {
-                        Text("Account")
-                            .font(.title3)
-                            .bold()
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-                        
-                        NavigationLink(destination: UserSubscriptionsView()) {
-                            SettingsRow(icon: "creditcard", title: "Subscriptions", hasNavigation: true)
-                        }
-                        
-                        SettingsRow(icon: "bell", title: "Notifications", hasNavigation: true)
-                        SettingsRow(icon: "lock", title: "Privacy", hasNavigation: true)
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Account")
+                        .font(.title3)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding(.horizontal)
+                    
+                    NavigationLink(destination: UserSubscriptionsView()) {
+                        SettingsRow(icon: "creditcard", title: "Subscriptions", hasNavigation: true)
+                    }
+                    
+                    SettingsRow(icon: "bell", title: "Notifications", hasNavigation: true)
+                    SettingsRow(icon: "lock", title: "Privacy", hasNavigation: true)
                     }
                 }
                 
@@ -372,11 +375,11 @@ struct SettingsView: View {
                 
                 // Sign Out - Only show if logged in
                 if user != nil {
-                    Button(action: {
+                Button(action: {
                         userState.signOut()
-                    }) {
-                        SettingsRow(icon: "arrow.right.square", title: "Sign Out", hasNavigation: false)
-                            .foregroundColor(.red)
+                }) {
+                    SettingsRow(icon: "arrow.right.square", title: "Sign Out", hasNavigation: false)
+                        .foregroundColor(.red)
                     }
                 }
             }

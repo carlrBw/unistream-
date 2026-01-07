@@ -3,8 +3,7 @@ import SwiftUI
 struct FavoritesLoopView: View {
     @EnvironmentObject var userState: UserState
     @EnvironmentObject var interactionService: UserInteractionService
-    @State private var showingLoginView = false
-    @State private var showingSignUpView = false
+    @Binding var selectedTab: Int
     
     private var favoritesByService: [StreamingService: [Content]] {
         Dictionary(grouping: userState.myList, by: { $0.service })
@@ -13,7 +12,7 @@ struct FavoritesLoopView: View {
     var body: some View {
         NavigationStack {
             if userState.isAuthenticated {
-                ScrollView {
+            ScrollView {
                     VStack(spacing: 24) {
                         if userState.myList.isEmpty {
                             VStack(spacing: 16) {
@@ -59,57 +58,57 @@ struct FavoritesLoopView: View {
                                             NavigationLink(destination: ContentDetailView(content: content)
                                                 .environmentObject(userState)
                                                 .environmentObject(interactionService)) {
-                                                HStack(spacing: 15) {
-                                                    // Thumbnail
-                                                    AsyncImage(url: URL(string: content.thumbnailURL)) { image in
-                                                        image
-                                                            .resizable()
-                                                            .aspectRatio(contentMode: .fill)
-                                                    } placeholder: {
-                                                        Rectangle()
-                                                            .fill(content.service.color.opacity(0.3))
-                                                            .overlay(
-                                                                ProgressView()
-                                                                    .tint(.white)
-                                                            )
-                                                    }
-                                                    .frame(width: 100, height: 150)
-                                                    .cornerRadius(10)
-                                                    
-                                                    VStack(alignment: .leading, spacing: 8) {
-                                                        Text(content.title)
-                                                            .font(.headline)
-                                                            .foregroundColor(.white)
-                                                        
-                                                        Text(content.description)
-                                                            .font(.subheadline)
-                                                            .foregroundColor(.gray)
-                                                            .lineLimit(2)
-                                                        
-                                                        HStack {
-                                                            AsyncImage(url: URL(string: content.service.logoURL)) { image in
-                                                                image
-                                                                    .resizable()
-                                                                    .aspectRatio(contentMode: .fit)
-                                                            } placeholder: {
-                                                                Text(content.service.rawValue)
-                                                            }
-                                                            .frame(height: 15)
-                                                            .foregroundColor(.gray)
-                                                            
-                                                            Spacer()
-                                                            
+                            HStack(spacing: 15) {
+                                // Thumbnail
+                                AsyncImage(url: URL(string: content.thumbnailURL)) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Rectangle()
+                                        .fill(content.service.color.opacity(0.3))
+                                        .overlay(
+                                            ProgressView()
+                                                .tint(.white)
+                                        )
+                                }
+                                .frame(width: 100, height: 150)
+                                .cornerRadius(10)
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(content.title)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    
+                                    Text(content.description)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                        .lineLimit(2)
+                                    
+                                    HStack {
+                                        AsyncImage(url: URL(string: content.service.logoURL)) { image in
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                        } placeholder: {
+                                            Text(content.service.rawValue)
+                                        }
+                                        .frame(height: 15)
+                                        .foregroundColor(.gray)
+                                        
+                                        Spacer()
+                                        
                                                             Image(systemName: "heart.fill")
                                                                 .foregroundColor(.red)
-                                                        }
-                                                    }
-                                                    
-                                                    Spacer()
-                                                }
-                                                .padding()
-                                                .background(Color.black.opacity(0.3))
-                                                .cornerRadius(15)
-                                            }
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.black.opacity(0.3))
+                            .cornerRadius(15)
+                        }
                                         }
                                     }
                                     .padding(.horizontal)
@@ -119,7 +118,12 @@ struct FavoritesLoopView: View {
                     }
                     .padding(.vertical)
                 }
-                .navigationTitle("Favorites")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        EmptyView()
+                    }
+                }
             } else {
                 VStack(spacing: 24) {
                     Spacer()
@@ -142,53 +146,42 @@ struct FavoritesLoopView: View {
                     
                     VStack(spacing: 16) {
                         Button(action: {
-                            showingLoginView = true
+                            // Switch to Profile tab (index 1) for login
+                            selectedTab = 1
                         }) {
                             Text("Log In")
                                 .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .cornerRadius(10)
+                                .foregroundColor(.primary)
                         }
                         
                         Button(action: {
-                            showingSignUpView = true
+                            // Switch to Profile tab (index 1) for sign up
+                            selectedTab = 1
                         }) {
                             Text("Sign Up")
                                 .font(.headline)
-                                .foregroundColor(.blue)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue.opacity(0.2))
-                                .cornerRadius(10)
+                                .foregroundColor(.primary)
                         }
                     }
                     .padding(.horizontal, 40)
                     .padding(.top, 20)
                     
                     Spacer()
-                }
+            }
                 .padding()
-                .navigationTitle("Favorites")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        EmptyView()
+                    }
+                }
             }
         }
-        .background(
-            LinearGradient(gradient: Gradient(colors: [.blue.opacity(0.8), .black]),
-                         startPoint: .top,
-                         endPoint: .bottom)
-            .ignoresSafeArea()
-        )
-        .sheet(isPresented: $showingLoginView) {
-            LoginView()
-                .environmentObject(userState)
-                .environmentObject(interactionService)
-        }
-        .sheet(isPresented: $showingSignUpView) {
-            SignUpView()
-                .environmentObject(userState)
-                .environmentObject(interactionService)
-        }
+            .background(
+                LinearGradient(gradient: Gradient(colors: [.blue.opacity(0.8), .black]),
+                             startPoint: .top,
+                             endPoint: .bottom)
+                .ignoresSafeArea()
+            )
     }
 } 

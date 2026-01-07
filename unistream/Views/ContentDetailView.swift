@@ -15,6 +15,8 @@ struct ContentDetailView: View {
     @State private var isLooped = false
     @State private var isWatched = false
     @State private var selectedSeason: Int = 1
+    @State private var trailerKey: String?
+    @State private var isLoadingTrailer = false
     
     init(content: Content) {
         self.content = content
@@ -30,24 +32,15 @@ struct ContentDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Banner Image Section with Overlay Content
+                // Banner Image/Trailer Carousel Section with Overlay Content
                 GeometryReader { geometry in
                     ZStack(alignment: .bottom) {
-                        // Banner Image
-                        AsyncImage(url: URL(string: content.bannerURL)) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, height: 400)
-                                .clipped()
-                        } placeholder: {
-                            Rectangle()
-                                .fill(content.service.color.opacity(0.3))
-                                .overlay(
-                                    ProgressView()
-                                        .tint(.white)
-                                )
-                        }
+                        // Trailer Carousel (shows banner first, then trailer after 5 seconds)
+                        TrailerCarousel(
+                            bannerURL: content.bannerURL,
+                            trailerKey: trailerKey
+                        )
+                        .frame(width: geometry.size.width, height: 400)
                         
                         // Gradient Overlay
                         LinearGradient(
@@ -130,27 +123,33 @@ struct ContentDetailView: View {
                                 .lineLimit(3)
                             
                             // View count and Play button
-                            HStack {
+                            HStack(alignment: .center, spacing: 12) {
                                 // View count and likes
                                 HStack(spacing: 16) {
                                     // View count
                                     HStack(spacing: 4) {
                                         Image(systemName: "eye.fill")
                                             .foregroundColor(.gray)
+                                            .font(.subheadline)
                                         Text("\(viewsCount) user\(viewsCount == 1 ? " has" : "s have") watched")
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                     }
                                     
-                                    // Likes count
-                                    HStack(spacing: 4) {
-                                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                                            .foregroundColor(isLiked ? .red : .gray)
-                                        Text("\(likesCount) user\(likesCount == 1 ? " has" : "s have") liked")
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
+                                    // Likes count (clickable)
+                                    Button(action: toggleLike) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                                .foregroundColor(isLiked ? .red : .gray)
+                                                .font(.subheadline)
+                                            Text("\(likesCount) user\(likesCount == 1 ? " has" : "s have") liked")
+                                                .font(.subheadline)
+                                                .foregroundColor(.gray)
+                                        }
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
+                                .fixedSize(horizontal: false, vertical: true)
                                 
                                 Spacer()
                                 
@@ -292,7 +291,23 @@ struct ContentDetailView: View {
             if mockData.content.isEmpty {
                 await mockData.loadContent()
             }
+            await loadTrailer()
         }
+    }
+    
+    private func loadTrailer() async {
+        guard let tmdbId = content.tmdbId else { return }
+        
+        isLoadingTrailer = true
+        do {
+            let videos = try await TMDBService.fetchVideos(for: tmdbId, isMovie: !content.isTVShow)
+            if let firstTrailer = videos.first {
+                trailerKey = firstTrailer.key
+            }
+        } catch {
+            print("Failed to load trailer: \(error)")
+        }
+        isLoadingTrailer = false
     }
     
     private func toggleAddToProfile() {
@@ -313,6 +328,20 @@ struct ContentDetailView: View {
                 userState.addToLoopedEpisodes(content: content, episode: selectedEpisode!)
             }
             // You might want to add a remove function as well
+        }
+    }
+    
+    private func toggleLike() {
+        guard let userId = userState.currentUser?.id else { return }
+        
+        withAnimation {
+            isLiked.toggle()
+            if isLiked {
+                interactionService.likeContent(content.id, userId: userId)
+            } else {
+                interactionService.unlikeContent(content.id, userId: userId)
+            }
+            likesCount = interactionService.getContentLikesCount(content.id)
         }
     }
     
@@ -676,16 +705,6 @@ struct MovieSocialSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            // Likes
-            HStack {
-                Button(action: toggleLike) {
-                    Image(systemName: isLiked ? "heart.fill" : "heart")
-                        .foregroundColor(isLiked ? .red : .gray)
-                }
-                Text("\(likesCount) user\(likesCount == 1 ? " has" : "s have") liked")
-                    .foregroundColor(.gray)
-            }
-            
             // Comment Input
             CommentInput(newComment: $newComment) {
                 addComment()
@@ -696,18 +715,6 @@ struct MovieSocialSection: View {
                 CommentView(comment: comment)
             }
         }
-    }
-    
-    private func toggleLike() {
-        guard let userId = userState.currentUser?.id else { return }
-        
-        isLiked.toggle()
-        if isLiked {
-            interactionService.likeContent(content.id, userId: userId)
-        } else {
-            interactionService.unlikeContent(content.id, userId: userId)
-        }
-        likesCount = interactionService.getContentLikesCount(content.id)
     }
     
     private func addComment() {

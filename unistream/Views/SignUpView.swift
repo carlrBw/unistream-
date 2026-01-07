@@ -28,22 +28,26 @@ struct SignUpView: View {
                             .padding(.top, 50)
                         
                         VStack(spacing: 15) {
-                            TextField("Username", text: $username)
+                            TextField("Choose a username", text: $username)
                                 .textFieldStyle(RoundedTextFieldStyle())
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
+                                .tint(.blue)
                             
-                            TextField("Email", text: $email)
+                            TextField("Enter your email", text: $email)
                                 .textFieldStyle(RoundedTextFieldStyle())
                                 .keyboardType(.emailAddress)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
+                                .tint(.blue)
                             
-                            SecureField("Password", text: $password)
+                            SecureField("Create a password", text: $password)
                                 .textFieldStyle(RoundedTextFieldStyle())
+                                .tint(.blue)
                             
-                            SecureField("Confirm Password", text: $confirmPassword)
+                            SecureField("Confirm your password", text: $confirmPassword)
                                 .textFieldStyle(RoundedTextFieldStyle())
+                                .tint(.blue)
                             
                             Button(action: handleSignUp) {
                                 if isLoading {

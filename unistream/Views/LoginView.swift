@@ -114,11 +114,16 @@ struct LoginView: View {
                         
                         // Email/Password fields
                         VStack(spacing: 15) {
-                            TextField("Email", text: $email)
+                            TextField("Enter your email", text: $email)
                                 .textFieldStyle(RoundedTextFieldStyle())
+                                .keyboardType(.emailAddress)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .tint(.blue)
                             
-                            SecureField("Password", text: $password)
+                            SecureField("Enter your password", text: $password)
                                 .textFieldStyle(RoundedTextFieldStyle())
+                                .tint(.blue)
                             
                             Button(action: signInWithEmail) {
                                 Text("Sign In")
@@ -265,13 +270,18 @@ struct LoginView: View {
     }
 }
 
-// Custom text field style
+// Custom text field style with dark mode support
 struct RoundedTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding()
-            .background(Color.white)
-            .cornerRadius(8)
-            .shadow(radius: 2)
+        VStack(alignment: .leading, spacing: 0) {
+            configuration
+                .padding(.vertical, 12)
+                .foregroundColor(.primary)
+                .accentColor(.blue)
+            
+            Rectangle()
+                .fill(Color.gray.opacity(0.5))
+                .frame(height: 1)
+        }
     }
 } 

@@ -37,6 +37,7 @@
 		3AF65B072D7B87F700B494CE /* UserInteractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B072D7B87F700B494CF /* UserInteractionService.swift */; };
 		3AF65B082D7B87F800B494CE /* ServiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */; };
 		3AF65B092D7B87F900B494CE /* ImageColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */; };
+		3AF65B0A2D7B87FA00B494CE /* TrailerCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF65B0A2D7B87FA00B494CF /* TrailerCarousel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +91,7 @@
 		3AF65B072D7B87F700B494CF /* UserInteractionService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserInteractionService.swift; sourceTree = "<group>"; };
 		3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ServiceDetailView.swift; sourceTree = "<group>"; };
 		3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageColorExtractor.swift; sourceTree = "<group>"; };
+		3AF65B0A2D7B87FA00B494CF /* TrailerCarousel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrailerCarousel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +145,7 @@
 				3A0A1F562D6FDB34007DD113 /* SearchView.swift */,
 				3AF65B082D7B87F800B494CF /* ServiceDetailView.swift */,
 				3AF65B092D7B87F900B494CF /* ImageColorExtractor.swift */,
+				3AF65B0A2D7B87FA00B494CF /* TrailerCarousel.swift */,
 				3A3626112D8330D600C9BF18 /* SignUpView.swift */,
 				3AF65AF82D71F0AD00AF6CD3 /* SubscriptionCard.swift */,
 				3A0A1F612D70AA13007DD113 /* SubscriptionsView.swift */,
@@ -370,6 +373,7 @@
 				3A0A1F5C2D6FFB2B007DD113 /* HomeView.swift in Sources */,
 				3AF65B082D7B87F800B494CE /* ServiceDetailView.swift in Sources */,
 				3AF65B092D7B87F900B494CE /* ImageColorExtractor.swift in Sources */,
+				3AF65B0A2D7B87FA00B494CE /* TrailerCarousel.swift in Sources */,
 				3A0A1F532D6FDB0D007DD113 /* MockData.swift in Sources */,
 				3A3626122D8330D600C9BF18 /* SignUpView.swift in Sources */,
 				3AF65AFB2D723F2C00AF6CD3 /* Theme.swift in Sources */,

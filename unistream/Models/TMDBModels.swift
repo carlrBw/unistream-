@@ -167,6 +167,30 @@ struct TMDBTVSeasonDetails: Codable {
     }
 }
 
+// Video Models
+struct TMDBVideoResponse: Codable {
+    let id: Int
+    let results: [TMDBVideo]
+}
+
+struct TMDBVideo: Codable {
+    let id: String
+    let key: String
+    let name: String
+    let site: String
+    let type: String
+    let official: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case key
+        case name
+        case site
+        case type
+        case official
+    }
+}
+
 // Watch Providers Models
 struct TMDBWatchProviders: Codable {
     let id: Int?

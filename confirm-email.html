@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Confirmation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <script>
+        // Extract tokens from URL hash
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const type = params.get('type');
+        
+        if (accessToken && refreshToken) {
+            // Redirect to your app with the tokens
+            const appURL = `unistream://email-confirmation#access_token=${accessToken}&refresh_token=${refreshToken}&type=${type || 'email'}`;
+            window.location.href = appURL;
+        } else {
+            // Fallback: try to extract from query params
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const email = urlParams.get('email');
+            
+            if (token && email) {
+                const appURL = `unistream://email-confirmation?token=${token}&email=${encodeURIComponent(email)}`;
+                window.location.href = appURL;
+            } else {
+                document.body.innerHTML = '<p>Invalid confirmation link. Please contact support.</p>';
+            }
+        }
+    </script>
+    <p>Redirecting to app...</p>
+</body>
+</html>
